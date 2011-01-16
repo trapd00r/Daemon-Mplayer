@@ -2,7 +2,7 @@
 package Daemon::Mplayer;
 use vars qw($VERSION);
 
-$VERSION = '0.002';
+$VERSION = '0.005';
 
 BEGIN {
   require Exporter;
@@ -12,23 +12,25 @@ BEGIN {
 }
 
 use strict;
-use Carp;
+use Carp qw/croak/;
+
+sub mplayer_playlist {
+  my $file = shift;
+
+}
 
 sub mplayer_play {
-  my($pidfile, $log, @mplayer_args) = @_;
-
-  croak if !$pidfile;
-  croak if !$log;
-
-  _mplayer_daemonize($pidfile, $log, @mplayer_args);
+  _mplayer_daemonize(@_);
 }
 
 
 sub _mplayer_daemonize {
-  my($pidfile, $daemon_log, @mplayer_args) = @_;
+  my $mplayer = shift;
 
-  not defined $pidfile    and $pidfile    = '/tmp/mplayer_daemon.pid';
-  not defined $daemon_log and $daemon_log = '/dev/null';
+  my $pidfile = $mplayer->{pidfile} || '/tmp/mplayer_daemon.pid';
+  my $logfile = $mplayer->{logfile} || '/dev/null';
+  my $mp_path = $mplayer->{path}    || '/usr/bin/mplayer';
+
 
   use POSIX 'setsid';
   my $PID = fork();
@@ -45,30 +47,37 @@ sub _mplayer_daemonize {
     close($fh);
 
     waitpid($PID, 0);
-    #player_init();
     exit(0);
   }
+
   elsif($PID == 0) { # child
-    open(my $fh, '>', "$pidfile")
+    open(my $fh, '>', $pidfile)
       or croak("Can not open pidfile '$pidfile': $!");
 
     print $fh $$;
     close($fh);
 
-    open(STDOUT, '>>',  $daemon_log);
-    open(STDERR, '>', '/dev/null'); #    unless $ENV{DEBUG};
-    open(STDIN,  '<', '/dev/null'); #   unless $ENV{DEBUG};
+    open(STDOUT, '>>', $logfile)   unless $ENV{DEBUG};
+    open(STDERR, '>', '/dev/null') unless $ENV{DEBUG};
+    open(STDIN,  '<', '/dev/null') unless $ENV{DEBUG};
 
-    exec('mplayer', @mplayer_args);
+    print "exec( mplayer @{$mplayer->{args}})\n";
+    exec('mplayer', @{ $mplayer->{args} });
   }
   return 0;
 }
 
 sub mplayer_stop {
-  my $pidfile = shift;
+  my $mplayer = shift;
 
-  if(!defined($pidfile)) {
-    croak("Pidfile please");
+  croak("Not a hashref: '$mplayer'") if ref($mplayer) ne 'HASH';
+
+  my $pidfile = $mplayer->{pidfile} || '/tmp/mplayer_daemon.pid';
+  
+  if( (!-f $pidfile) and ($pidfile =~ m/^\d+$/) ) {
+    if(kill(9, $pidfile)) {
+      return 1;
+    }
   }
   open(my $fh, '<', $pidfile)
     or croak("Can not open pidfile '$pidfile': $!");
@@ -76,8 +85,13 @@ sub mplayer_stop {
   chomp(my $pid = <$fh>);
   close($fh);
 
+  if($pid !~ /^\d+$/) {
+    croak("PID '$pid' is not a valid PID");
+  }
+
   if(kill(9, $pid)) {
-    print "SUCCESS: $pid\n";
+    unlink($pidfile)
+      or croak("Can not delete pidfile '$pidfile': $!");
     return 1;
   }
   else {
@@ -116,7 +130,25 @@ B<Daemon::Mplayer> ...
 
 =head2 mplayer_play()
 
+Parameters: $pidfile, $log, @mplayer_arguments
+
+  mplayer_play(
+    pidfile => $pidfile,      # /tmp/mplayer_daemon.pid
+    log     => $logfile,      # /dev/null
+    path    => $mplayer_path, # /usr/bin/mplayer
+    args    => $mplayer_opts  # None
+  );
+
 =head2 mplayer_stop()
+
+Parameters: $pid | $pidfile
+
+Returns: Boolean
+
+Takes a PID or pidfile and tries to stop the corresponding process.
+
+If a valid PID is encountered in the pidfile, tries to stop the process.
+If this succeeds, the pidfile is removed for convience.
 
 =head1 AUTHOR
 
