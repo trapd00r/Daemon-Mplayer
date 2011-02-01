@@ -2,22 +2,18 @@
 package Daemon::Mplayer;
 use vars qw($VERSION);
 
-$VERSION = '0.005';
+$VERSION = '0.007';
 
 BEGIN {
   require Exporter;
   use vars qw(@ISA @EXPORT_OK);
-  @ISA    = 'Exporter';
-  @EXPORT = qw(mplayer_play mplayer_stop);
+  @ISA       = 'Exporter';
+  @EXPORT_OK = qw(mplayer_play mplayer_stop);
 }
 
 use strict;
 use Carp qw/croak/;
 
-sub mplayer_playlist {
-  my $file = shift;
-
-}
 
 sub mplayer_play {
   _mplayer_daemonize(@_);
@@ -61,8 +57,7 @@ sub _mplayer_daemonize {
     open(STDERR, '>', '/dev/null') unless $ENV{DEBUG};
     open(STDIN,  '<', '/dev/null') unless $ENV{DEBUG};
 
-    print "exec( mplayer @{$mplayer->{args}})\n";
-    exec('mplayer', @{ $mplayer->{args} });
+    exec($mp_path, @{ $mplayer->{args} });
   }
   return 0;
 }
@@ -116,7 +111,14 @@ Daemon::Mplayer - run mplayer daemonized
 
   use Daemon::Mplayer;
 
-  mplayer_play( $pidfile, $logfile, @mplayer_args );
+  mplayer_play(
+    {
+      pidfile => $pidfile,
+      logfile => $logfile,
+      path    => '/usr/bin/mplayer',
+      args    => [ @files ],
+    }
+  );
 
   ...
 
@@ -124,20 +126,35 @@ Daemon::Mplayer - run mplayer daemonized
 
 =head1 DESCRIPTION
 
-B<Daemon::Mplayer> ... 
+Daemon::Mplayer - Mplayer, daemonized
 
 =head1 EXPORTS
 
+None by default.
+
 =head2 mplayer_play()
 
-Parameters: $pidfile, $log, @mplayer_arguments
+Parameters: $pidfile, $log, $path,  @mplayer_arguments
 
   mplayer_play(
     pidfile => $pidfile,      # /tmp/mplayer_daemon.pid
-    log     => $logfile,      # /dev/null
+    logfile => $logfile,      # /dev/null
     path    => $mplayer_path, # /usr/bin/mplayer
     args    => $mplayer_opts  # None
   );
+
+The B<pidfile> is used as a locking mechanism and will contain the PID of the
+spawned mplayer process.
+
+The B<logfile> is where the output from mplayer will be stored. The default is
+B</dev/null>.
+
+The B<path> is the full path to an mplayer executable. Defaults to
+B</usr/bin/mplayer>.
+
+B<args> takes an array reference that might contain optional parameters to
+mplayer, as well as the file/URI to be played.
+
 
 =head2 mplayer_stop()
 
@@ -148,7 +165,7 @@ Returns: Boolean
 Takes a PID or pidfile and tries to stop the corresponding process.
 
 If a valid PID is encountered in the pidfile, tries to stop the process.
-If this succeeds, the pidfile is removed for convience.
+If this succeeds, the pidfile is removed.
 
 =head1 AUTHOR
 
@@ -157,14 +174,17 @@ If this succeeds, the pidfile is removed for convience.
   magnus@trapd00r.se
   http://japh.se
 
-=cut
+=head1 CONTRIBUTORS
+
+None required yet.
 
 =head1 COPYRIGHT
 
-Copyright 2011 Magnus Woldrich <magnus@trapd00r.se>. This program is free
-software; you may redistribute it and/or modify it under the same terms as Perl
-itself.
+Copyright 2011 The Daemon::Mplayers L</AUTHOR> and L</CONTRIBUTORS> as listed
+above.
 
-=head1 SEE ALSO
+=head1 LICENS
+This library is free software; you may redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut
