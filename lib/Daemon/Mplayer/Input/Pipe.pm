@@ -1,30 +1,33 @@
 #!/usr/bin/perl
-package Daemon::Mplayer::Control::Pipe;
-use vars qw($VERSION);
-
-$VERSION = '0.001';
+package Daemon::Mplayer::Input::Pipe;
 
 BEGIN {
   require Exporter;
   use vars qw(@ISA @EXPORT_OK);
   @ISA    = 'Exporter';
-  @EXPORT = qw(mplayer_cmd);
+  @EXPORT_OK = qw(mplayer_cmd);
 }
 
 use strict;
 use Carp qw/croak/;
 
 
-my %mplayer_options = (
-  next  => 'pt_step 1',
-  prev  => 'pt_step -1',
+my %cmdlist = (
+  next          => 'pt_step 1',
+  prev          => 'pt_step -1',
+  fullscreen    => 'vo_fullscreen',
+  toggle        => 'pause',
+  pause         => 'pause',
+  mute          => 'mute',
+  quit          => 'quit',
+  stop          => 'stop',
 );
 
 
 sub mplayer_cmd {
   my $option = shift;
-  
-  croak() if ref $option ne 'HASH';
+
+  croak("HASH reference expected\n") if ref $option ne 'HASH';
 
   my $fifo = $option->{fifo};
 
@@ -37,7 +40,7 @@ sub mplayer_cmd {
   print "Command: $command\nArguments: @args\n";
 
   open(my $fh, '>', $fifo) or croak("Can not open fifo '$fifo': $!");
-  print $fh "$command @args\n";
+  print $fh "$cmdlist{$command} @args\n";
   close($fh);
 }
 
@@ -50,14 +53,18 @@ __END__
 
 =head1 NAME
 
-Daemon::Mplayer::Control::Pipe - control mplayer with named pipes
+Daemon::Mplayer::Input::Pipe - control mplayer with named pipes
 
 =head1 SYNOPSIS
 
-  use Daemon::Mplayer;
-  use Daemon::Mplayer::Control::Pipe;
+  use Daemon::Mplayer qw(mplayer_play mplayer_stop);
+  use Daemon::Mplayer::Input::Pipe qw(mplayer_cmd);
 
-  mplayer_play( $pidfile, $logfile, @mplayer_args );
+  mplayer_play({
+    pidfile => $pidfile,
+    logfile => $logfile,
+    args    => [ @files ],
+  });
 
   ...
 
@@ -72,7 +79,7 @@ Daemon::Mplayer::Control::Pipe - control mplayer with named pipes
 
 =head1 DESCRIPTION
 
-B<Daemon::Mplayer::Control::Pipe> ... 
+B<Daemon::Mplayer::Input::Pipe> ...
 
 =head1 EXPORTS
 
@@ -103,4 +110,3 @@ itself.
 L<Daemon::Mplayer>
 
 =cut
-
