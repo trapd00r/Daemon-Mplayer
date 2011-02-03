@@ -1,19 +1,16 @@
-#!/usr/bin/perl
 package Daemon::Mplayer;
-use vars qw($VERSION);
-
-$VERSION = '0.007';
+use strict;
 
 BEGIN {
-  require Exporter;
-  use vars qw(@ISA @EXPORT_OK);
-  @ISA       = 'Exporter';
+  use Exporter;
+  use vars qw($VERSION @ISA @EXPORT_OK);
+
+  $VERSION   = q[0.009];
+  @ISA       = q[Exporter];
   @EXPORT_OK = qw(mplayer_play mplayer_stop);
 }
 
-use strict;
-use Carp qw/croak/;
-
+use Carp qw(croak);
 
 sub mplayer_play {
   _mplayer_daemonize(@_);
@@ -23,19 +20,20 @@ sub mplayer_play {
 sub _mplayer_daemonize {
   my $mplayer = shift;
 
-  my $pidfile = $mplayer->{pidfile} || '/tmp/mplayer_daemon.pid';
-  my $logfile = $mplayer->{logfile} || '/dev/null';
-  my $mp_path = $mplayer->{path}    || '/usr/bin/mplayer';
+  my $pidfile = $mplayer->{pidfile} || q[/tmp/mplayer_daemon.pid];
+  my $logfile = $mplayer->{logfile} || q[/dev/null];
+  my $mp_path = $mplayer->{path}    || q[/usr/bin/mplayer];
 
 
-  use POSIX 'setsid';
+  use POSIX qw(setsid);
   my $PID = fork();
-  exit(0) if($PID); #parent
-  exit(1) if(!defined($PID)); # out of resources
+
+  exit 0 if $PID;           # parent
+  exit 1 if !defined($PID); # out of resources
 
   setsid();
   $PID = fork();
-  exit(1) if(!defined($PID));
+  exit 1 if !defined($PID);
 
   if($PID) { # parent
     open(my $fh, '>', $pidfile) or croak($!);
@@ -43,12 +41,12 @@ sub _mplayer_daemonize {
     close($fh);
 
     waitpid($PID, 0);
-    exit(0);
+    exit 0;
   }
 
   elsif($PID == 0) { # child
     open(my $fh, '>', $pidfile)
-      or croak("Can not open pidfile '$pidfile': $!");
+      or croak(qq[Can not open pidfile '$pidfile': $!]);
 
     print $fh $$;
     close($fh);
@@ -65,34 +63,32 @@ sub _mplayer_daemonize {
 sub mplayer_stop {
   my $mplayer = shift;
 
-  croak("Not a hashref: '$mplayer'") if ref($mplayer) ne 'HASH';
+  croak(qq[Not a hashre: '$mplayer']) if ref($mplayer) ne q[HASH];
 
-  my $pidfile = $mplayer->{pidfile} || '/tmp/mplayer_daemon.pid';
-  
+  my $pidfile = $mplayer->{pidfile} || q[/tmp/mplayer_daemon.pid];
+
   if( (!-f $pidfile) and ($pidfile =~ m/^\d+$/) ) {
-    if(kill(9, $pidfile)) {
-      return 1;
-    }
+    return 1 if kill(9, $pidfile);
   }
   open(my $fh, '<', $pidfile)
-    or croak("Can not open pidfile '$pidfile': $!");
+    or croak(qq[Can not open pidfile '$pidfile': $!]);
 
   chomp(my $pid = <$fh>);
   close($fh);
 
   if($pid !~ /^\d+$/) {
-    croak("PID '$pid' is not a valid PID");
+    croak(qq[PID '$pid' is not a valid PID]);
   }
 
   if(kill(9, $pid)) {
     unlink($pidfile)
-      or croak("Can not delete pidfile '$pidfile': $!");
+      or croak(qq[Can not delete pidfile '$pidfile': $!]);
     return 1;
   }
   else {
-    croak("Can not kill PID $pid: $!");
+    croak(qq[Can not kill PID '$pid': $!]);
   }
-  return 0;
+  return;
 }
 
 
@@ -180,10 +176,10 @@ None required yet.
 
 =head1 COPYRIGHT
 
-Copyright 2011 The Daemon::Mplayers L</AUTHOR> and L</CONTRIBUTORS> as listed
+Copyright 2011 The B<Daemon::Mplayer>s L</AUTHOR> and L</CONTRIBUTORS> as listed
 above.
 
-=head1 LICENS
+=head1 LICENSE
 This library is free software; you may redistribute it and/or modify it under
 the same terms as Perl itself.
 
