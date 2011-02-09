@@ -63,7 +63,7 @@ sub _mplayer_daemonize {
 sub mplayer_stop {
   my $mplayer = shift;
 
-  croak(qq[Not a hashre: '$mplayer']) if ref($mplayer) ne q[HASH];
+  croak(qq[Not a hashref: '$mplayer']) if ref($mplayer) ne q[HASH];
 
   my $pidfile = $mplayer->{pidfile} || q[/tmp/mplayer_daemon.pid];
 
@@ -115,8 +115,6 @@ Daemon::Mplayer - run mplayer daemonized
       args    => [ @files ],
     }
   );
-
-  ...
 
   mplayer_stop($pid);
 
@@ -180,6 +178,7 @@ Copyright 2011 The B<Daemon::Mplayer>s L</AUTHOR> and L</CONTRIBUTORS> as listed
 above.
 
 =head1 LICENSE
+
 This library is free software; you may redistribute it and/or modify it under
 the same terms as Perl itself.
 
