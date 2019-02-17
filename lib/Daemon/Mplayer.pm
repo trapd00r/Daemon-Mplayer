@@ -5,7 +5,7 @@ BEGIN {
   use Exporter;
   use vars qw($VERSION @ISA @EXPORT_OK);
 
-  $VERSION   = q[0.010];
+  $VERSION   = q[0.012];
   @ISA       = q[Exporter];
   @EXPORT_OK = qw(mplayer_play mplayer_stop);
 }
@@ -165,7 +165,7 @@ If this succeeds, the pidfile is removed.
 
   Magnus Woldrich
   CPAN ID: WOLDRICH
-  magnus@trapd00r.se
+  m@japh.se
   http://japh.se
 
 =head1 CONTRIBUTORS
@@ -174,8 +174,8 @@ None required yet.
 
 =head1 COPYRIGHT
 
-Copyright 2011 The B<Daemon::Mplayer>s L</AUTHOR> and L</CONTRIBUTORS> as listed
-above.
+Copyright 2011, 2019- The B<Daemon::Mplayer>s L</AUTHOR> and
+L</CONTRIBUTORS> as listed above.
 
 =head1 LICENSE
 
