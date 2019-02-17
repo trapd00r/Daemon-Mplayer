@@ -105,18 +105,18 @@ Daemon::Mplayer - run mplayer daemonized
 
 =head1 SYNOPSIS
 
-  use Daemon::Mplayer;
+  use Daemon::Mplayer qw(mplayer_play mplayer_stop);
 
   mplayer_play(
     {
-      pidfile => $pidfile,
-      logfile => $logfile,
+      pidfile => q{mplayer.pid},
+      logfile => q{mplayer.log},
       path    => '/usr/bin/mplayer',
-      args    => [ @files ],
+      args    => [ qw(file1 file2) ],
     }
   );
 
-  mplayer_stop($pid);
+  mplayer_stop('mplayer.pid');
 
 =head1 DESCRIPTION
 
