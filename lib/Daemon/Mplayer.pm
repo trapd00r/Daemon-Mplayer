@@ -5,7 +5,7 @@ BEGIN {
   use Exporter;
   use vars qw($VERSION @ISA @EXPORT_OK);
 
-  $VERSION   = q[0.012];
+  $VERSION   = q[0.014];
   @ISA       = q[Exporter];
   @EXPORT_OK = qw(mplayer_play mplayer_stop);
 }
